@@ -1,0 +1,1638 @@
+import random
+
+# Define constants
+MAX_LEVEL = 100
+ITEMS = ["Health Potion", "Mana Potion", "Sword", "Staff", "Bow", "Armor"]
+MONSTER_TYPES = ["Goblin", "Skeleton", "Orc", "Troll"]
+
+# Player class
+class Player:
+    def __init__(self, name):
+        self.name = name
+        self.health = 100
+        self.max_health = 100
+        self.mana = 50
+        self.max_mana = 50
+        self.level = 1
+        self.experience = 0
+        self.gold = 0
+        self.inventory = []
+        self.equipment = {"Weapon": None, "Armor": None}
+
+    def gain_experience(self, amount):
+        self.experience += amount
+        while self.experience >= self.level * 10:
+            self.level_up()
+
+    def level_up(self):
+        self.level += 1
+        self.max_health += 10
+        self.max_mana += 5
+        self.health = self.max_health
+        self.mana = self.max_mana
+        print(f"Congratulations! {self.name} reached level {self.level}!")
+
+    def restore_health(self, amount):
+        self.health = min(self.health + amount, self.max_health)
+
+    def restore_mana(self, amount):
+        self.mana = min(self.mana + amount, self.max_mana)
+
+    def display_stats(self):
+        print(f"Name: {self.name}")
+        print(f"Level: {self.level}")
+        print(f"Health: {self.health}/{self.max_health}")
+        print(f"Mana: {self.mana}/{self.max_mana}")
+        print(f"Gold: {self.gold}")
+        print("Inventory:")
+        if self.inventory:
+            for item in self.inventory:
+                print(item)
+        else:
+            print("Empty")
+        print("Equipment:")
+        for slot, item in self.equipment.items():
+            print(f"{slot}: {item}" if item else f"{slot}: Empty")
+
+    def equip(self, item):
+        if item in self.inventory:
+            if item in ITEMS and item in self.equipment.values():
+                print(f"You are already equipped with {item}.")
+            elif item == "Health Potion":
+                self.health += 20
+                if self.health > self.max_health:
+                    self.health = self.max_health
+                self.inventory.remove(item)
+                print("You drank a Health Potion.")
+            elif item == "Mana Potion":
+                self.mana += 20
+                if self.mana > self.max_mana:
+                    self.mana = self.max_mana
+                self.inventory.remove(item)
+                print("You drank a Mana Potion.")
+            elif item in ["Sword", "Staff", "Bow"]:
+                if self.equipment["Weapon"]:
+                    self.inventory.append(self.equipment["Weapon"])
+                self.equipment["Weapon"] = item
+                self.inventory.remove(item)
+                print(f"You equipped a {item}.")
+            elif item == "Armor":
+                if self.equipment["Armor"]:
+                    self.inventory.append(self.equipment["Armor"])
+                self.equipment["Armor"] = item
+                self.inventory.remove(item)
+                print("You equipped Armor.")
+        else:
+            print("You don't have that item.")
+            # Monster class
+            class Monster:
+                def __init__(self, level):
+                    self.type = random.choice(MONSTER_TYPES)
+                    self.level = level
+                    self.health = 20 + level * 5
+                    self.attack_power = 5 + level * 2
+
+                def attack(self):
+                    return self.attack_power + random.randint(-2, 2)
+
+            # Boss monster class
+            class Boss(Monster):
+                def __init__(self, level):
+                    super().__init__(level)
+                    self.type = "Dragon"
+                    self.health *= 2
+                    self.attack_power *= 2
+
+            # Game loop
+            def game_loop(player):
+                level = 1
+                while player.health > 0 and player.level <= MAX_LEVEL:
+                    print(f"\nEntering Level {level}")
+                    if level % 10 == 0:
+                        boss = Boss(level)
+                        print(f"A {boss.type} appears!")
+                        combat(player, boss)
+                    else:
+                        monster = Monster(level)
+                        print(f"A {monster.type} appears!")
+                        combat(player, monster)
+
+                    if player.health > 0:
+                        level += 1
+                        reward_player(player, level)
+
+                if player.health <= 0:
+                    print("Game Over")
+                elif player.level > MAX_LEVEL:
+                    print("Congratulations! You reached the maximum level.")
+
+            # Combat function
+            def combat(player, enemy):
+                while enemy.health > 0 and player.health > 0:
+                    print(f"\nPlayer Health: {player.health}/{player.max_health}, Mana: {player.mana}/{player.max_mana}")
+                    print(f"{enemy.type} Health: {enemy.health}")
+                    action = input("Choose an action: [attack, magic, flee] ")
+
+                    if action == "attack":
+                        damage = calculate_damage(player.equipment["Weapon"])
+                        enemy.health -= damage
+                        print(f"You attacked the {enemy.type} and dealt {damage} damage!")
+                        if enemy.health > 0:
+                            player.health -= enemy.attack()  # Enemy attacks
+                            print(f"The {enemy.type} attacked you and dealt {enemy.attack()} damage!")
+                    elif action == "magic":
+                        if player.mana >= 10:
+                            player.mana -= 10
+                            print("You used magic!")
+                            # Implement magic effects here
+                        else:
+                            print("Not enough mana to cast a spell!")
+
+# Monster class
+class Monster:
+    def __init__(self, level):
+        self.type = random.choice(MONSTER_TYPES)
+        self.level = level
+        self.health = 20 + level * 5
+        self.attack_power = 5 + level * 2
+
+    def attack(self):
+        return self.attack_power + random.randint(-2, 2)
+
+# Boss monster class
+class Boss(Monster):
+    def __init__(self, level):
+        super().__init__(level)
+        self.type = "Dragon"
+        self.health *= 2
+        self.attack_power *= 2
+
+# Game loop
+def game_loop(player):
+    level = 1
+    while player.health > 0 and player.level <= MAX_LEVEL:
+        print(f"\nEntering Level {level}")
+        if level % 10 == 0:
+            boss = Boss(level)
+            print(f"A {boss.type} appears!")
+            combat(player, boss)
+        else:
+            monster = Monster(level)
+            print(f"A {monster.type} appears!")
+            combat(player, monster)
+
+        if player.health > 0:
+            level += 1
+            reward_player(player, level)
+
+    if player.health <= 0:
+        print("Game Over")
+    elif player.level > MAX_LEVEL:
+        print("Congratulations! You reached the maximum level.")
+
+# Combat function
+def combat(player, enemy):
+    while enemy.health > 0 and player.health > 0:
+        print(f"\nPlayer Health: {player.health}/{player.max_health}, Mana: {player.mana}/{player.max_mana}")
+        print(f"{enemy.type} Health: {enemy.health}")
+        action = input("Choose an action: [attack, magic, flee] ")
+
+        if action == "attack":
+            damage = calculate_damage(player.equipment["Weapon"])
+            enemy.health -= damage
+            print(f"You attacked the {enemy.type} and dealt {damage} damage!")
+            if enemy.health > 0:
+                player.health -= enemy.attack()  # Enemy attacks
+                print(f"The {enemy.type} attacked you and dealt {enemy.attack()} damage!")
+        elif action == "magic":
+            if player.mana >= 10:
+                player.mana -= 10
+                print("You used magic!")
+                # Implement magic effects here
+            else:
+                print("Not enough mana to cast a spell!")
+# Calculate damage based on weapon
+def calculate_damage(weapon):
+    if weapon == "Sword":
+        return 15 + random.randint(0, 5)
+    elif weapon == "Staff":
+        return 10 + random.randint(5, 10)
+    elif weapon == "Bow":
+        return 12 + random.randint(3, 8)
+    else:
+        return 5  # Default unarmed damage
+
+# Enhanced magic system
+def cast_magic(player):
+    if player.mana >= 10:
+        player.mana -= 10
+        damage = 20 + random.randint(5, 10)
+        print(f"You cast a spell and dealt {damage} magic damage!")
+        return damage
+    else:
+        print("Not enough mana to cast a spell!")
+        return 0
+
+# Handle player input for moving and dodging
+def handle_input():
+    while True:
+        action = input("Choose an action: [attack, magic, dodge, stats, inventory, shop, quit] ").lower()
+        if action in ["attack", "magic", "dodge", "stats", "inventory", "shop", "quit"]:
+            return action
+        else:
+            print("Invalid choice. Please try again.")
+
+# Combat function with dodging and magic
+def combat(player, enemy):
+    while enemy.health > 0 and player.health > 0:
+        print(f"\nPlayer Health: {player.health}/{player.max_health}, Mana: {player.mana}/{player.max_mana}")
+        print(f"{enemy.type} Health: {enemy.health}")
+        action = handle_input()
+
+        if action == "attack":
+            damage = calculate_damage(player.equipment["Weapon"])
+            enemy.health -= damage
+            print(f"You attacked the {enemy.type} and dealt {damage} damage!")
+        elif action == "magic":
+            damage = cast_magic(player)
+            enemy.health -= damage
+        elif action == "dodge":
+            if random.random() > 0.5:
+                print("You dodged the attack!")
+                continue
+            else:
+                print("Failed to dodge!")
+        elif action == "stats":
+            player.display_stats()
+            continue
+        elif action == "inventory":
+            player.display_stats()
+            item_choice = input("Would you like to use or equip an item? (yes/no) ").lower()
+            if item_choice == "yes":
+                item_to_use = input("Which item would you like to use/equip? ").capitalize()
+                player.equip(item_to_use)
+            continue
+        elif action == "shop":
+            shop(player)
+            continue
+        elif action == "quit":
+            print("Quitting the game.")
+            return
+
+        if enemy.health > 0:
+            enemy_damage = enemy.attack()
+            player.health -= enemy_damage
+            print(f"The {enemy.type} attacked you and dealt {enemy_damage} damage!")
+
+# Define more skills and unique abilities for each weapon
+def weapon_skill(weapon):
+    if weapon == "Sword":
+        return "Power Slash", 30 + random.randint(5, 10)
+    elif weapon == "Staff":
+        return "Fireball", 25 + random.randint(10, 15)
+    elif weapon == "Bow":
+        return "Arrow Rain", 20 + random.randint(5, 15)
+    else:
+        return "Punch", 5 + random.randint(0, 5)
+
+# Expanded combat function to include weapon skills
+def combat(player, enemy):
+    while enemy.health > 0 and player.health > 0:
+        print(f"\nPlayer Health: {player.health}/{player.max_health}, Mana: {player.mana}/{player.max_mana}")
+        print(f"{enemy.type} Health: {enemy.health}")
+        action = handle_input()
+
+        if action == "attack":
+            damage = calculate_damage(player.equipment["Weapon"])
+            enemy.health -= damage
+            print(f"You attacked the {enemy.type} and dealt {damage} damage!")
+        elif action == "magic":
+            damage = cast_magic(player)
+            enemy.health -= damage
+        elif action == "dodge":
+            if random.random() > 0.5:
+                print("You dodged the attack!")
+                continue
+            else:
+                print("Failed to dodge!")
+        elif action == "stats":
+            player.display_stats()
+            continue
+        elif action == "inventory":
+            player.display_stats()
+            item_choice = input("Would you like to use or equip an item? (yes/no) ").lower()
+            if item_choice == "yes":
+                item_to_use = input("Which item would you like to use/equip? ").capitalize()
+                player.equip(item_to_use)
+            continue
+        elif action == "shop":
+            shop(player)
+            continue
+        elif action == "quit":
+            print("Quitting the game.")
+            return
+        elif action == "skill":
+            skill, skill_damage = weapon_skill(player.equipment["Weapon"])
+            if player.mana >= 15:
+                player.mana -= 15
+                enemy.health -= skill_damage
+                print(f"You used {skill} and dealt {skill_damage} damage!")
+            else:
+                print("Not enough mana to use the skill!")
+
+        if enemy.health > 0:
+            enemy_damage = enemy.attack()
+            player.health -= enemy_damage
+            print(f"The {enemy.type} attacked you and dealt {enemy_damage} damage!")
+
+# Main game function
+def main():
+    print("Welcome to the Dungeon Crawler Game!")
+    player_name = input("Enter your character's name: ")
+    player = Player(player_name)
+
+    print(f"Welcome, {player.name}!")
+    while True:
+        action = input("Do you want to [start] the game or [quit]? ").lower()
+        if action == "start":
+            game_loop(player)
+        elif action == "quit":
+            print("Thanks for playing!")
+            break
+        else:
+            print("Invalid choice. Please try again.")
+# Rest function to restore health and mana
+def rest(player):
+    player.restore_health(30)
+    player.restore_mana(20)
+    print("You rested and restored 30 health and 20 mana!")
+
+# Enhanced handle input function with rest option
+def handle_input():
+    while True:
+        action = input("Choose an action: [attack, magic, dodge, skill, rest, stats, inventory, shop, quit] ").lower()
+        if action in ["attack", "magic", "dodge", "skill", "rest", "stats", "inventory", "shop", "quit"]:
+            return action
+        else:
+            print("Invalid choice. Please try again.")
+
+# Main game function
+def main():
+    print("Welcome to the Dungeon Crawler Game!")
+    player_name = input("Enter your character's name: ")
+    player = Player(player_name)
+
+    print(f"Welcome, {player.name}!")
+    while True:
+        action = input("Do you want to [start] the game or [quit]? ").lower()
+        if action == "start":
+            game_loop(player)
+        elif action == "quit":
+            print("Thanks for playing!")
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+# Game loop with rest option
+def game_loop(player):
+    level = 1
+    while player.health > 0 and player.level <= MAX_LEVEL:
+        print(f"\nEntering Level {level}")
+        if level % 10 == 0:
+            boss = Boss(level)
+            print(f"A {boss.type} appears!")
+            combat(player, boss)
+        else:
+            monster = Monster(level)
+            print(f"A {monster.type} appears!")
+            combat(player, monster)
+
+        if player.health > 0:
+            level += 1
+            reward_player(player, level)
+            if level % 5 == 0:
+                shop(player)
+            rest(player)
+
+    if player.health <= 0:
+        print("Game Over")
+    elif player.level > MAX_LEVEL:
+        print("Congratulations! You reached the maximum level.")
+
+# Entry point for the game
+if __name__ == "__main__":
+    main()
+import pickle
+
+# Save player state to file
+def save_game(player):
+    with open("savefile.pkl", "wb") as f:
+        pickle.dump(player, f)
+    print("Game saved successfully!")
+
+# Load player state from file
+def load_game():
+    try:
+        with open("savefile.pkl", "rb") as f:
+            player = pickle.load(f)
+        print("Game loaded successfully!")
+        return player
+    except FileNotFoundError:
+        print("No save file found.")
+        return None
+
+# Main game function with load option
+def main():
+    print("Welcome to the Dungeon Crawler Game!")
+    while True:
+        action = input("Do you want to [start] a new game, [load] a saved game, or [quit]? ").lower()
+        if action == "start":
+            player_name = input("Enter your character's name: ")
+            player = Player(player_name)
+            break
+        elif action == "load":
+            player = load_game()
+            if player:
+                break
+        elif action == "quit":
+            print("Thanks for playing!")
+            return
+        else:
+            print("Invalid choice. Please try again.")
+
+    print(f"Welcome, {player.name}!")
+    game_loop(player)
+
+# Game loop with save option
+def game_loop(player):
+    level = 1
+    while player.health > 0 and player.level <= MAX_LEVEL:
+        print(f"\nEntering Level {level}")
+        if level % 10 == 0:
+            boss = Boss(level)
+            print(f"A {boss.type} appears!")
+            combat(player, boss)
+        else:
+            monster = Monster(level)
+            print(f"A {monster.type} appears!")
+            combat(player, monster)
+
+        if player.health > 0:
+            level += 1
+            reward_player(player, level)
+            if level % 5 == 0:
+                shop(player)
+            rest(player)
+            if input("Would you like to save the game? (yes/no) ").lower() == "yes":
+                save_game(player)
+
+    if player.health <= 0:
+        print("Game Over")
+    elif player.level > MAX_LEVEL:
+        print("Congratulations! You reached the maximum level.")
+
+# Player input handler during combat
+def handle_input():
+    while True:
+        action = input("Choose an action: [attack, magic, dodge, skill, rest, stats, inventory, shop, save, quit] ").lower()
+        if action in ["attack", "magic", "dodge", "skill", "rest", "stats", "inventory", "shop", "save", "quit"]:
+            return action
+        else:
+            print("Invalid choice. Please try again.")
+# Improved combat function with more detailed actions
+def combat(player, enemy):
+    while enemy.health > 0 and player.health > 0:
+        print(f"\nPlayer Health: {player.health}/{player.max_health}, Mana: {player.mana}/{player.max_mana}")
+        print(f"{enemy.type} Health: {enemy.health}")
+        action = handle_input()
+
+        if action == "attack":
+            damage = calculate_damage(player.equipment["Weapon"])
+            enemy.health -= damage
+            print(f"You attacked the {enemy.type} and dealt {damage} damage!")
+        elif action == "magic":
+            if player.mana >= 10:
+                damage = cast_magic(player)
+                enemy.health -= damage
+                print(f"You cast a spell and dealt {damage} magic damage!")
+            else:
+                print("Not enough mana to cast a spell!")
+        elif action == "dodge":
+            if random.random() > 0.5:
+                print("You dodged the attack!")
+                continue
+            else:
+                print("Failed to dodge!")
+        elif action == "skill":
+            skill, skill_damage = weapon_skill(player.equipment["Weapon"])
+            if player.mana >= 15:
+                player.mana -= 15
+                enemy.health -= skill_damage
+                print(f"You used {skill} and dealt {skill_damage} damage!")
+            else:
+                print("Not enough mana to use the skill!")
+        elif action == "rest":
+            rest(player)
+            continue
+        elif action == "stats":
+            player.display_stats()
+            continue
+        elif action == "inventory":
+            player.display_stats()
+            item_choice = input("Would you like to use or equip an item? (yes/no) ").lower()
+            if item_choice == "yes":
+                item_to_use = input("Which item would you like to use/equip? ").capitalize()
+                player.equip(item_to_use)
+            continue
+        elif action == "shop":
+            shop(player)
+            continue
+        elif action == "save":
+            save_game(player)
+            continue
+        elif action == "quit":
+            print("Quitting the game.")
+            return
+
+        if enemy.health > 0:
+            enemy_damage = enemy.attack()
+            player.health -= enemy_damage
+            print(f"The {enemy.type} attacked you and dealt {enemy_damage} damage!")
+
+    if player.health > 0:
+        print(f"You defeated the {enemy.type}!")
+        player.gain_experience(enemy.level * 10)
+
+# Display detailed stats for the player
+def display_stats(player):
+    print(f"\nName: {player.name}")
+    print(f"Level: {player.level}")
+    print(f"Health: {player.health}/{player.max_health}")
+    print(f"Mana: {player.mana}/{player.max_mana}")
+    print(f"Experience: {player.experience}")
+    print(f"Gold: {player.gold}")
+    print("Inventory:")
+    if player.inventory:
+        for item in player.inventory:
+            print(f"  - {item}")
+    else:
+        print("  - Empty")
+    print("Equipment:")
+    for slot, item in player.equipment.items():
+        print(f"  {slot}: {item}" if item else f"  {slot}: Empty")
+# Function for player leveling up
+def level_up(player):
+    player.level += 1
+    player.max_health += 10
+    player.health = player.max_health
+    player.max_mana += 5
+    player.mana = player.max_mana
+    player.attack_power += 2
+    print(f"\nCongratulations! {player.name} leveled up to level {player.level}!")
+    print(f"Health and mana have been fully restored. Health increased to {player.max_health}, Mana increased to {player.max_mana}.")
+    print("Attack power increased as well!")
+
+# Function to gain experience and check for level up
+def gain_experience(player, exp):
+    player.experience += exp
+    print(f"You gained {exp} experience points!")
+    while player.experience >= player.level * 100:
+        player.experience -= player.level * 100
+        level_up(player)
+
+# Enhanced reward system with different item types
+def reward_player(player, level):
+    gold_reward = random.randint(10, 50) * level
+    item_drop = random.choice(["Sword", "Staff", "Bow", "Health Potion", "Mana Potion"])
+    player.gold += gold_reward
+    player.inventory.append(item_drop)
+    print(f"You earned {gold_reward} gold and found a {item_drop}!")
+
+# Update the Player class to include level up and experience
+class Player:
+    def __init__(self, name):
+        self.name = name
+        self.level = 1
+        self.max_health = 100
+        self.health = self.max_health
+        self.max_mana = 50
+        self.mana = self.max_mana
+        self.attack_power = 10
+        self.experience = 0
+        self.gold = 0
+        self.inventory = []
+        self.equipment = {"Weapon": None, "Armor": None}
+
+    def restore_health(self, amount):
+        self.health = min(self.max_health, self.health + amount)
+
+    def restore_mana(self, amount):
+        self.mana = min(self.max_mana, self.mana + amount)
+
+    def display_stats(self):
+        print(f"\nName: {self.name}")
+        print(f"Level: {self.level}")
+        print(f"Health: {self.health}/{self.max_health}")
+        print(f"Mana: {self.mana}/{self.max_mana}")
+        print(f"Experience: {self.experience}")
+        print(f"Gold: {self.gold}")
+        print("Inventory:")
+        if self.inventory:
+            for item in self.inventory:
+                print(f"  - {item}")
+        else:
+            print("  - Empty")
+        print("Equipment:")
+        for slot, item in self.equipment.items():
+            print(f"  {slot}: {item}" if item else f"  {slot}: Empty")
+
+    def equip(self, item):
+        if item in self.inventory:
+            if "Sword" in item or "Staff" in item or "Bow" in item:
+                self.equipment["Weapon"] = item
+            elif "Armor" in item:
+                self.equipment["Armor"] = item
+            self.inventory.remove(item)
+            print(f"You equipped {item}.")
+        else:
+            print(f"You don't have a {item} in your inventory.")
+
+    def gain_experience(self, exp):
+        gain_experience(self, exp)
+# Shop system with dynamic inventory
+def shop(player):
+    shop_items = ["Health Potion", "Mana Potion", "Sword", "Staff", "Bow", "Armor"]
+    print("\nWelcome to the shop!")
+    print("Available items:")
+    for i, item in enumerate(shop_items, 1):
+        price = (i * 10) + 20
+        print(f"{i}. {item} - {price} gold")
+    print(f"You have {player.gold} gold.")
+
+    while True:
+        choice = input("Enter the number of the item you want to buy or 'leave' to exit: ").lower()
+        if choice == "leave":
+            break
+        if choice.isdigit() and 1 <= int(choice) <= len(shop_items):
+            item_index = int(choice) - 1
+            item_price = (item_index + 1) * 10 + 20
+            if player.gold >= item_price:
+                player.gold -= item_price
+                player.inventory.append(shop_items[item_index])
+                print(f"You bought {shop_items[item_index]} for {item_price} gold.")
+            else:
+                print("Not enough gold.")
+        else:
+            print("Invalid choice. Please try again.")
+
+# Enemy class definitions
+class Enemy:
+    def __init__(self, level):
+        self.level = level
+        self.health = 50 + (level * 10)
+        self.attack_power = 5 + (level * 2)
+
+    def attack(self):
+        return self.attack_power + random.randint(0, 5)
+
+class Monster(Enemy):
+    def __init__(self, level):
+        super().__init__(level)
+        self.type = "Monster"
+
+class Boss(Enemy):
+    def __init__(self, level):
+        super().__init__(level)
+        self.type = "Boss"
+        self.health *= 2
+        self.attack_power *= 2
+
+# Main game function
+def main():
+    print("Welcome to the Dungeon Crawler Game!")
+    while True:
+        action = input("Do you want to [start] a new game, [load] a saved game, or [quit]? ").lower()
+        if action == "start":
+            player_name = input("Enter your character's name: ")
+            player = Player(player_name)
+            break
+        elif action == "load":
+            player = load_game()
+            if player:
+                break
+        elif action == "quit":
+            print("Thanks for playing!")
+            return
+        else:
+            print("Invalid choice. Please try again.")
+
+    print(f"Welcome, {player.name}!")
+    game_loop(player)
+
+# Game loop with shop integration
+def game_loop(player):
+    level = 1
+    while player.health > 0 and player.level <= MAX_LEVEL:
+        print(f"\nEntering Level {level}")
+        if level % 10 == 0:
+            boss = Boss(level)
+            print(f"A {boss.type} appears!")
+            combat(player, boss)
+        else:
+            monster = Monster(level)
+            print(f"A {monster.type} appears!")
+            combat(player, monster)
+
+        if player.health > 0:
+            level += 1
+            reward_player(player, level)
+            if level % 5 == 0:
+                shop(player)
+            rest(player)
+            if input("Would you like to save the game? (yes/no) ").lower() == "yes":
+                save_game(player)
+
+    if player.health <= 0:
+        print("Game Over")
+    elif player.level > MAX_LEVEL:
+        print("Congratulations! You reached the maximum level.")
+
+# Entry point for the game
+if __name__ == "__main__":
+    main()
+# Function to use items from the inventory
+def use_item(player, item):
+    if item == "Health Potion":
+        player.restore_health(50)
+        player.inventory.remove(item)
+        print("You used a Health Potion and restored 50 health!")
+    elif item == "Mana Potion":
+        player.restore_mana(30)
+        player.inventory.remove(item)
+        print("You used a Mana Potion and restored 30 mana!")
+    else:
+        print("This item cannot be used directly.")
+
+# Update the inventory display and handling in combat
+def handle_inventory(player):
+    player.display_stats()
+    item_choice = input("Would you like to use or equip an item? (yes/no) ").lower()
+    if item_choice == "yes":
+        item_to_use = input("Which item would you like to use/equip? ").capitalize()
+        if item_to_use in player.inventory:
+            use_item(player, item_to_use)
+        else:
+            print(f"You don't have a {item_to_use} in your inventory.")
+
+# Improved combat loop with better user feedback and item usage
+def combat(player, enemy):
+    while enemy.health > 0 and player.health > 0:
+        print(f"\nPlayer Health: {player.health}/{player.max_health}, Mana: {player.mana}/{player.max_mana}")
+        print(f"{enemy.type} Health: {enemy.health}")
+        action = handle_input()
+
+        if action == "attack":
+            damage = calculate_damage(player.equipment["Weapon"])
+            enemy.health -= damage
+            print(f"You attacked the {enemy.type} and dealt {damage} damage!")
+        elif action == "magic":
+            if player.mana >= 10:
+                damage = cast_magic(player)
+                enemy.health -= damage
+                print(f"You cast a spell and dealt {damage} magic damage!")
+            else:
+                print("Not enough mana to cast a spell!")
+        elif action == "dodge":
+            if random.random() > 0.5:
+                print("You dodged the attack!")
+                continue
+            else:
+                print("Failed to dodge!")
+        elif action == "skill":
+            skill, skill_damage = weapon_skill(player.equipment["Weapon"])
+            if player.mana >= 15:
+                player.mana -= 15
+                enemy.health -= skill_damage
+                print(f"You used {skill} and dealt {skill_damage} damage!")
+            else:
+                print("Not enough mana to use the skill!")
+        elif action == "rest":
+            rest(player)
+            continue
+        elif action == "stats":
+            player.display_stats()
+            continue
+        elif action == "inventory":
+            handle_inventory(player)
+            continue
+        elif action == "shop":
+            shop(player)
+            continue
+        elif action == "save":
+            save_game(player)
+            continue
+        elif action == "quit":
+            print("Quitting the game.")
+            return
+
+        if enemy.health > 0:
+            enemy_damage = enemy.attack()
+            player.health -= enemy_damage
+            print(f"The {enemy.type} attacked you and dealt {enemy_damage} damage!")
+
+    if player.health > 0:
+        print(f"You defeated the {enemy.type}!")
+        player.gain_experience(enemy.level * 10)
+
+# Game loop with enhanced feedback and balance
+def game_loop(player):
+    level = 1
+    while player.health > 0 and player.level <= MAX_LEVEL:
+        print(f"\nEntering Level {level}")
+        if level % 10 == 0:
+            boss = Boss(level)
+            print(f"A {boss.type} appears!")
+            combat(player, boss)
+        else:
+            monster = Monster(level)
+            print(f"A {monster.type} appears!")
+            combat(player, monster)
+
+        if player.health > 0:
+            level += 1
+            reward_player(player, level)
+            if level % 5 == 0:
+                shop(player)
+            rest(player)
+            if input("Would you like to save the game? (yes/no) ").lower() == "yes":
+                save_game(player)
+
+    if player.health <= 0:
+        print("Game Over")
+    elif player.level > MAX_LEVEL:
+        print("Congratulations! You reached the maximum level.")
+# Calculate damage based on equipped weapon
+def calculate_damage(weapon):
+    base_damage = 15
+    if weapon == "Sword":
+        return base_damage + 10
+    elif weapon == "Staff":
+        return base_damage + 5
+    elif weapon == "Bow":
+        return base_damage + 7
+    else:
+        return base_damage
+
+# Cast magic with different spells based on player's level
+def cast_magic(player):
+    if player.level < 5:
+        return random.randint(10, 20)
+    elif player.level < 10:
+        return random.randint(20, 30)
+    else:
+        return random.randint(30, 40)
+
+# Special weapon skills
+def weapon_skill(weapon):
+    if weapon == "Sword":
+        return "Slash", random.randint(20, 30)
+    elif weapon == "Staff":
+        return "Fireball", random.randint(15, 25)
+    elif weapon == "Bow":
+        return "Arrow Rain", random.randint(18, 28)
+    else:
+        return "Punch", random.randint(5, 10)
+
+# Rest to restore health and mana
+def rest(player):
+    player.restore_health(20)
+    player.restore_mana(10)
+    print("You rested and restored some health and mana.")
+
+# Boss class with special attacks
+class Boss(Enemy):
+    def __init__(self, level):
+        super().__init__(level)
+        self.type = "Boss"
+        self.health *= 2
+        self.attack_power *= 2
+
+    def special_attack(self):
+        return self.attack_power * 2
+
+# Modify combat for boss special attack
+def combat(player, enemy):
+    while enemy.health > 0 and player.health > 0:
+        print(f"\nPlayer Health: {player.health}/{player.max_health}, Mana: {player.mana}/{player.max_mana}")
+        print(f"{enemy.type} Health: {enemy.health}")
+        action = handle_input()
+
+        if action == "attack":
+            damage = calculate_damage(player.equipment["Weapon"])
+            enemy.health -= damage
+            print(f"You attacked the {enemy.type} and dealt {damage} damage!")
+        elif action == "magic":
+            if player.mana >= 10:
+                damage = cast_magic(player)
+                player.mana -= 10
+                enemy.health -= damage
+                print(f"You cast a spell and dealt {damage} magic damage!")
+            else:
+                print("Not enough mana to cast a spell!")
+        elif action == "dodge":
+            if random.random() > 0.5:
+                print("You dodged the attack!")
+                continue
+            else:
+                print("Failed to dodge!")
+        elif action == "skill":
+            skill, skill_damage = weapon_skill(player.equipment["Weapon"])
+            if player.mana >= 15:
+                player.mana -= 15
+                enemy.health -= skill_damage
+                print(f"You used {skill} and dealt {skill_damage} damage!")
+            else:
+                print("Not enough mana to use the skill!")
+        elif action == "rest":
+            rest(player)
+            continue
+        elif action == "stats":
+            player.display_stats()
+            continue
+        elif action == "inventory":
+            handle_inventory(player)
+            continue
+        elif action == "shop":
+            shop(player)
+            continue
+        elif action == "save":
+            save_game(player)
+            continue
+        elif action == "quit":
+            print("Quitting the game.")
+            return
+
+        if enemy.health > 0:
+            if isinstance(enemy, Boss) and random.random() < 0.3:
+                enemy_damage = enemy.special_attack()
+                print(f"The {enemy.type} used a special attack!")
+            else:
+                enemy_damage = enemy.attack()
+            player.health -= enemy_damage
+            print(f"The {enemy.type} attacked you and dealt {enemy_damage} damage!")
+
+    if player.health > 0:
+        print(f"You defeated the {enemy.type}!")
+        player.gain_experience(enemy.level * 10)
+# Enhanced Shop System with dynamic pricing and selling items
+def shop(player):
+    shop_items = ["Health Potion", "Mana Potion", "Sword", "Staff", "Bow", "Armor"]
+    shop_prices = [(i * 10) + 20 for i in range(len(shop_items))]
+    print("\nWelcome to the shop!")
+    print("Available items:")
+    for i, item in enumerate(shop_items, 1):
+        price = shop_prices[i-1]
+        print(f"{i}. {item} - {price} gold")
+    print(f"You have {player.gold} gold.")
+
+    while True:
+        choice = input("Enter the number of the item you want to buy, 'sell' to sell an item, or 'leave' to exit: ").lower()
+        if choice == "leave":
+            break
+        elif choice == "sell":
+            print("Inventory:")
+            for i, item in enumerate(player.inventory, 1):
+                print(f"{i}. {item}")
+            sell_choice = input("Enter the number of the item you want to sell or 'back' to return: ").lower()
+            if sell_choice == "back":
+                continue
+            elif sell_choice.isdigit() and 1 <= int(sell_choice) <= len(player.inventory):
+                item_to_sell = player.inventory[int(sell_choice) - 1]
+                player.inventory.remove(item_to_sell)
+                sell_price = shop_prices[shop_items.index(item_to_sell)] // 2
+                player.gold += sell_price
+                print(f"You sold {item_to_sell} for {sell_price} gold.")
+            else:
+                print("Invalid choice. Please try again.")
+        elif choice.isdigit() and 1 <= int(choice) <= len(shop_items):
+            item_index = int(choice) - 1
+            item_price = shop_prices[item_index]
+            if player.gold >= item_price:
+                player.gold -= item_price
+                player.inventory.append(shop_items[item_index])
+                print(f"You bought {shop_items[item_index]} for {item_price} gold.")
+            else:
+                print("Not enough gold.")
+        else:
+            print("Invalid choice. Please try again.")
+
+# Enhanced Player class with more detailed stats and abilities
+class Player:
+    def __init__(self, name):
+        self.name = name
+        self.level = 1
+        self.max_health = 100
+        self.health = self.max_health
+        self.max_mana = 50
+        self.mana = self.max_mana
+        self.attack_power = 15
+        self.experience = 0
+        self.gold = 0
+        self.inventory = []
+        self.equipment = {"Weapon": None, "Armor": None}
+
+    def restore_health(self, amount):
+        self.health = min(self.max_health, self.health + amount)
+
+    def restore_mana(self, amount):
+        self.mana = min(self.max_mana, self.mana + amount)
+
+    def display_stats(self):
+        print(f"\nName: {self.name}")
+        print(f"Level: {self.level}")
+        print(f"Health: {self.health}/{self.max_health}")
+        print(f"Mana: {self.mana}/{self.max_mana}")
+        print(f"Experience: {self.experience}")
+        print(f"Gold: {self.gold}")
+        print("Inventory:")
+        if self.inventory:
+            for item in self.inventory:
+                print(f"  - {item}")
+        else:
+            print("  - Empty")
+        print("Equipment:")
+        for slot, item in self.equipment.items():
+            print(f"  {slot}: {item}" if item else f"  {slot}: Empty")
+
+    def equip(self, item):
+        if item in self.inventory:
+            if "Sword" in item or "Staff" in item or "Bow" in item:
+                self.equipment["Weapon"] = item
+            elif "Armor" in item:
+                self.equipment["Armor"] = item
+            self.inventory.remove(item)
+            print(f"You equipped {item}.")
+        else:
+            print(f"You don't have a {item} in your inventory.")
+
+    def gain_experience(self, exp):
+        gain_experience(self, exp)
+
+# Improved combat loop with better user feedback and item usage
+def combat(player, enemy):
+    while enemy.health > 0 and player.health > 0:
+        print(f"\nPlayer Health: {player.health}/{player.max_health}, Mana: {player.mana}/{player.max_mana}")
+        print(f"{enemy.type} Health: {enemy.health}")
+        action = handle_input()
+
+        if action == "attack":
+            damage = calculate_damage(player.equipment["Weapon"])
+            enemy.health -= damage
+            print(f"You attacked the {enemy.type} and dealt {damage} damage!")
+        elif action == "magic":
+            if player.mana >= 10:
+                damage = cast_magic(player)
+                player.mana -= 10
+                enemy.health -= damage
+                print(f"You cast a spell and dealt {damage} magic damage!")
+            else:
+                print("Not enough mana to cast a spell!")
+        elif action == "dodge":
+            if random.random() > 0.5:
+                print("You dodged the attack!")
+                continue
+            else:
+                print("Failed to dodge!")
+        elif action == "skill":
+            skill, skill_damage = weapon_skill(player.equipment["Weapon"])
+            if player.mana >= 15:
+                player.mana -= 15
+                enemy.health -= skill_damage
+                print(f"You used {skill} and dealt {skill_damage} damage!")
+            else:
+                print("Not enough mana to use the skill!")
+        elif action == "rest":
+            rest(player)
+            continue
+        elif action == "stats":
+            player.display_stats()
+            continue
+        elif action == "inventory":
+            handle_inventory(player)
+            continue
+        elif action == "shop":
+            shop(player)
+            continue
+        elif action == "save":
+            save_game(player)
+            continue
+        elif action == "quit":
+            print("Quitting the game.")
+            return
+
+        if enemy.health > 0:
+            if isinstance(enemy, Boss) and random.random() < 0.3:
+                enemy_damage = enemy.special_attack()
+                print(f"The {enemy.type} used a special attack!")
+            else:
+                enemy_damage = enemy.attack()
+            player.health -= enemy_damage
+            print(f"The {enemy.type} attacked you and dealt {enemy_damage} damage!")
+
+    if player.health > 0:
+        print(f"You defeated the {enemy.type}!")
+        player.gain_experience(enemy.level * 10)
+# Save game state to a file
+def save_game(player):
+    with open("save_game.txt", "w") as file:
+        file.write(player.name + "\n")
+        file.write(str(player.level) + "\n")
+        file.write(str(player.health) + "\n")
+        file.write(str(player.mana) + "\n")
+        file.write(str(player.experience) + "\n")
+        file.write(str(player.gold) + "\n")
+        file.write(",".join(player.inventory) + "\n")
+        file.write(player.equipment["Weapon"] + "\n")
+        file.write(player.equipment["Armor"] + "\n")
+    print("Game saved successfully.")
+
+# Load game state from a file
+def load_game():
+    try:
+        with open("save_game.txt", "r") as file:
+            lines = file.readlines()
+            name = lines[0].strip()
+            level = int(lines[1])
+            health = int(lines[2])
+            mana = int(lines[3])
+            experience = int(lines[4])
+            gold = int(lines[5])
+            inventory = lines[6].strip().split(",")
+            weapon = lines[7].strip()
+            armor = lines[8].strip()
+        player = Player(name)
+        player.level = level
+        player.health = health
+        player.mana = mana
+        player.experience = experience
+        player.gold = gold
+        player.inventory = inventory
+        player.equipment["Weapon"] = weapon
+        player.equipment["Armor"] = armor
+        print("Game loaded successfully.")
+        return player
+    except FileNotFoundError:
+        print("No saved game found.")
+        return None
+
+# Improved combat loop with more diverse actions
+def combat(player, enemy):
+    while enemy.health > 0 and player.health > 0:
+        print(f"\nPlayer Health: {player.health}/{player.max_health}, Mana: {player.mana}/{player.max_mana}")
+        print(f"{enemy.type} Health: {enemy.health}")
+        action = handle_input()
+
+        if action == "attack":
+            damage = calculate_damage(player.equipment["Weapon"])
+            enemy.health -= damage
+            print(f"You attacked the {enemy.type} and dealt {damage} damage!")
+        elif action == "magic":
+            if player.mana >= 10:
+                damage = cast_magic(player)
+                player.mana -= 10
+                enemy.health -= damage
+                print(f"You cast a spell and dealt {damage} magic damage!")
+            else:
+                print("Not enough mana to cast a spell!")
+        elif action == "dodge":
+            if random.random() > 0.5:
+                print("You dodged the attack!")
+                continue
+            else:
+                print("Failed to dodge!")
+        elif action == "skill":
+            skill, skill_damage = weapon_skill(player.equipment["Weapon"])
+            if player.mana >= 15:
+                player.mana -= 15
+                enemy.health -= skill_damage
+                print(f"You used {skill} and dealt {skill_damage} damage!")
+            else:
+                print("Not enough mana to use the skill!")
+        elif action == "rest":
+            rest(player)
+            continue
+        elif action == "stats":
+            player.display_stats()
+            continue
+        elif action == "inventory":
+            handle_inventory(player)
+            continue
+        elif action == "shop":
+            shop(player)
+            continue
+        elif action == "save":
+            save_game(player)
+            continue
+        elif action == "load":
+            player = load_game()
+            continue
+        elif action == "quit":
+            print("Quitting the game.")
+            return
+
+        if enemy.health > 0:
+            if isinstance(enemy, Boss) and random.random() < 0.3:
+                enemy_damage = enemy.special_attack()
+                print(f"The {enemy.type} used a special attack!")
+            else:
+                enemy_damage = enemy.attack()
+            player.health -= enemy_damage
+            print(f"The {enemy.type} attacked you and dealt {enemy_damage} damage!")
+
+    if player.health > 0:
+        print(f"You defeated the {enemy.type}!")
+        player.gain_experience(enemy.level * 10)
+# Function to handle player input during combat
+def handle_input():
+    while True:
+        print("\nActions:")
+        print("1. Attack")
+        print("2. Magic")
+        print("3. Dodge")
+        print("4. Use Skill")
+        print("5. Rest")
+        print("6. Check Stats")
+        print("7. Open Inventory")
+        print("8. Visit Shop")
+        print("9. Save Game")
+        print("10. Load Game")
+        print("11. Quit Game")
+        choice = input("Enter the number corresponding to your action: ")
+        if choice.isdigit() and 1 <= int(choice) <= 11:
+            actions = {
+                "1": "attack",
+                "2": "magic",
+                "3": "dodge",
+                "4": "skill",
+                "5": "rest",
+                "6": "stats",
+                "7": "inventory",
+                "8": "shop",
+                "9": "save",
+                "10": "load",
+                "11": "quit"
+            }
+            return actions[choice]
+        else:
+            print("Invalid choice. Please enter a number between 1 and 11.")
+
+# Function to handle reward for defeating enemies
+def reward_player(player, level):
+    reward_gold = level * 20
+    reward_exp = level * 10
+    player.gold += reward_gold
+    player.gain_experience(reward_exp)
+    print(f"You earned {reward_gold} gold and {reward_exp} experience points!")
+
+# Function to handle selling items from inventory
+def handle_sell(player):
+    print("Inventory:")
+    for i, item in enumerate(player.inventory, 1):
+        print(f"{i}. {item}")
+    sell_choice = input("Enter the number of the item you want to sell or 'back' to return: ").lower()
+    if sell_choice == "back":
+        return
+    elif sell_choice.isdigit() and 1 <= int(sell_choice) <= len(player.inventory):
+        item_to_sell = player.inventory[int(sell_choice) - 1]
+        player.inventory.remove(item_to_sell)
+        sell_price = shop_prices[shop_items.index(item_to_sell)] // 2
+        player.gold += sell_price
+        print(f"You sold {item_to_sell} for {sell_price} gold.")
+    else:
+        print("Invalid choice. Please try again.")
+
+# Function to handle saving the game
+def handle_save(player):
+    save_game(player)
+    return
+
+# Function to handle loading the game
+def handle_load():
+    player = load_game()
+    return player
+
+# Function to handle quitting the game
+def handle_quit():
+    print("Quitting the game.")
+    return "quit"
+
+# Improved combat loop with more diverse actions
+def combat(player, enemy):
+    while enemy.health > 0 and player.health > 0:
+        print(f"\nPlayer Health: {player.health}/{player.max_health}, Mana: {player.mana}/{player.max_mana}")
+        print(f"{enemy.type} Health: {enemy.health}")
+        action = handle_input()
+
+        if action == "attack":
+            damage = calculate_damage(player.equipment["Weapon"])
+            enemy.health -= damage
+            print(f"You attacked the {enemy.type} and dealt {damage} damage!")
+        elif action == "magic":
+            if player.mana >= 10:
+                damage = cast_magic(player)
+                player.mana -= 10
+                enemy.health -= damage
+                print(f"You cast a spell and dealt {damage} magic damage!")
+            else:
+                print("Not enough mana to cast a spell!")
+        elif action == "dodge":
+            if random.random() > 0.5:
+                print("You dodged the attack!")
+                continue
+            else:
+                print("Failed to dodge!")
+        elif action == "skill":
+            skill, skill_damage = weapon_skill(player.equipment["Weapon"])
+            if player.mana >= 15:
+                player.mana -= 15
+                enemy.health -= skill_damage
+                print(f"You used {skill} and dealt {skill_damage} damage!")
+            else:
+                print("Not enough mana to use the skill!")
+        elif action == "rest":
+            rest(player)
+            continue
+        elif action == "stats":
+            player.display_stats()
+            continue
+        elif action == "inventory":
+            handle_inventory(player)
+            continue
+        elif action == "shop":
+            shop(player)
+            continue
+        elif action == "save":
+            handle_save(player)
+            continue
+        elif action == "load":
+            player = handle_load()
+            continue
+        elif action == "quit":
+            return handle_quit()
+
+        if enemy.health > 0:
+            if isinstance(enemy, Boss) and random.random() < 0.3:
+                enemy_damage = enemy.special_attack()
+                print(f"The {enemy.type} used a special attack!")
+            else:
+                enemy_damage = enemy.attack()
+            player.health -= enemy_damage
+            print(f"The {enemy.type} attacked you and dealt {enemy_damage} damage!")
+
+    if player.health > 0:
+        print(f"You defeated the {enemy.type}!")
+        reward_player(player, enemy.level)
+# Function to handle player's rest action
+def rest(player):
+    player.restore_health(20)
+    player.restore_mana(10)
+    print("You rested and restored some health and mana.")
+
+# Function to handle player's inventory action
+def handle_inventory(player):
+    print("\nInventory:")
+    if player.inventory:
+        for item in player.inventory:
+            print(f"- {item}")
+    else:
+        print("Empty")
+
+# Function to handle player's visit to the shop
+def shop(player):
+    shop_items = ["Health Potion", "Mana Potion", "Sword", "Staff", "Bow", "Armor"]
+    shop_prices = [(i * 10) + 20 for i in range(len(shop_items))]
+    print("\nWelcome to the shop!")
+    print("Available items:")
+    for i, item in enumerate(shop_items, 1):
+        price = shop_prices[i - 1]
+        print(f"{i}. {item} - {price} gold")
+    print(f"You have {player.gold} gold.")
+
+    while True:
+        choice = input("Enter the number of the item you want to buy, 'sell' to sell an item, or 'leave' to exit: ").lower()
+        if choice == "leave":
+            break
+        elif choice == "sell":
+            handle_sell(player)
+        elif choice.isdigit() and 1 <= int(choice) <= len(shop_items):
+            item_index = int(choice) - 1
+            item_price = shop_prices[item_index]
+            if player.gold >= item_price:
+                player.gold -= item_price
+                player.inventory.append(shop_items[item_index])
+                print(f"You bought {shop_items[item_index]} for {item_price} gold.")
+            else:
+                print("Not enough gold.")
+        else:
+            print("Invalid choice. Please try again.")
+
+# Function to handle the player's input during combat
+def handle_input():
+    while True:
+        print("\nActions:")
+        print("1. Attack")
+        print("2. Magic")
+        print("3. Dodge")
+        print("4. Use Skill")
+        print("5. Rest")
+        print("6. Check Stats")
+        print("7. Open Inventory")
+        print("8. Visit Shop")
+        print("9. Save Game")
+        print("10. Load Game")
+        print("11. Quit Game")
+        choice = input("Enter the number corresponding to your action: ")
+        if choice.isdigit() and 1 <= int(choice) <= 11:
+            actions = {
+                "1": "attack",
+                "2": "magic",
+                "3": "dodge",
+                "4": "skill",
+                "5": "rest",
+                "6": "stats",
+                "7": "inventory",
+                "8": "shop",
+                "9": "save",
+                "10": "load",
+                "11": "quit"
+            }
+            return actions[choice]
+        else:
+            print("Invalid choice. Please enter a number between 1 and 11.")
+
+# Function to handle the player's save action
+def save_game(player):
+    with open("save_game.txt", "w") as file:
+        file.write(player.name + "\n")
+        file.write(str(player.level) + "\n")
+        file.write(str(player.health) + "\n")
+        file.write(str(player.mana) + "\n")
+        file.write(str(player.experience) + "\n")
+        file.write(str(player.gold) + "\n")
+        file.write(",".join(player.inventory) + "\n")
+        file.write(player.equipment["Weapon"] + "\n")
+        file.write(player.equipment["Armor"] + "\n")
+    print("Game saved successfully.")
+
+# Function to handle the player's load action
+def load_game():
+    try:
+        with open("save_game.txt", "r") as file:
+            lines = file.readlines()
+            name = lines[0].strip()
+            level = int(lines[1])
+            health = int(lines[2])
+            mana = int(lines[3])
+            experience = int(lines[4])
+            gold = int(lines[5])
+            inventory = lines[6].strip().split(",")
+            weapon = lines[7].strip()
+            armor = lines[8].strip()
+        player = Player(name)
+        player.level = level
+        player.health = health
+        player.mana = mana
+        player.experience = experience
+        player.gold = gold
+        player.inventory = inventory
+        player.equipment["Weapon"] = weapon
+        player.equipment["Armor"] = armor
+        print("Game loaded successfully.")
+        return player
+    except FileNotFoundError:
+        print("No saved game found.")
+        return None
+
+# Function to handle the player's quit action
+def handle_quit():
+    print("Quitting the game.")
+    return "quit"
+# Function to calculate damage for the player's attack
+def calculate_damage(weapon):
+    if weapon == "Sword":
+        return random.randint(10, 20)
+    elif weapon == "Staff":
+        return random.randint(8, 15)
+    elif weapon == "Bow":
+        return random.randint(12, 18)
+    else:
+        return random.randint(10, 15)
+
+# Function to cast magic and calculate damage
+def cast_magic(player):
+    return random.randint(10, 20)
+
+# Function to handle using a skill based on equipped weapon
+def weapon_skill(weapon):
+    if weapon == "Sword":
+        return "Slash", random.randint(15, 25)
+    elif weapon == "Staff":
+        return "Fireball", random.randint(20, 30)
+    elif weapon == "Bow":
+        return "Arrow Rain", random.randint(18, 25)
+    else:
+        return "Strike", random.randint(15, 20)
+
+# Function to handle selling items from inventory
+def handle_sell(player):
+    print("Inventory:")
+    for i, item in enumerate(player.inventory, 1):
+        print(f"{i}. {item}")
+    sell_choice = input("Enter the number of the item you want to sell or 'back' to return: ").lower()
+    if sell_choice == "back":
+        return
+    elif sell_choice.isdigit() and 1 <= int(sell_choice) <= len(player.inventory):
+        item_to_sell = player.inventory[int(sell_choice) - 1]
+        player.inventory.remove(item_to_sell)
+        sell_price = shop_prices[shop_items.index(item_to_sell)] // 2
+        player.gold += sell_price
+        print(f"You sold {item_to_sell} for {sell_price} gold.")
+    else:
+        print("Invalid choice. Please try again.")
+
+# Function to reward the player for defeating enemies
+def reward_player(player, level):
+    reward_gold = level * 20
+    reward_exp = level * 10
+    player.gold += reward_gold
+    player.gain_experience(reward_exp)
+    print(f"You earned {reward_gold} gold and {reward_exp} experience points!")
+
+# Improved combat loop with more diverse actions
+def combat(player, enemy):
+    while enemy.health > 0 and player.health > 0:
+        print(f"\nPlayer Health: {player.health}/{player.max_health}, Mana: {player.mana}/{player.max_mana}")
+        print(f"{enemy.type} Health: {enemy.health}")
+        action = handle_input()
+
+        if action == "attack":
+            damage = calculate_damage(player.equipment["Weapon"])
+            enemy.health -= damage
+            print(f"You attacked the {enemy.type} and dealt {damage} damage!")
+        elif action == "magic":
+            if player.mana >= 10:
+                damage = cast_magic(player)
+                player.mana -= 10
+                enemy.health -= damage
+                print(f"You cast a spell and dealt {damage} magic damage!")
+            else:
+                print("Not enough mana to cast a spell!")
+        elif action == "dodge":
+            if random.random() > 0.5:
+                print("You dodged the attack!")
+                continue
+            else:
+                print("Failed to dodge!")
+        elif action == "skill":
+            skill, skill_damage = weapon_skill(player.equipment["Weapon"])
+            if player.mana >= 15:
+                player.mana -= 15
+                enemy.health -= skill_damage
+                print(f"You used {skill} and dealt {skill_damage} damage!")
+            else:
+                print("Not enough mana to use the skill!")
+        elif action == "rest":
+            rest(player)
+            continue
+        elif action == "stats":
+            player.display_stats()
+            continue
+        elif action == "inventory":
+            handle_inventory(player)
+            continue
+        elif action == "shop":
+            shop(player)
+            continue
+        elif action == "save":
+            save_game(player)
+            continue
+        elif action == "load":
+            player = load_game()
+            continue
+        elif action == "quit":
+            return handle_quit()
+
+        if enemy.health > 0:
+            if isinstance(enemy, Boss) and random.random() < 0.3:
+                enemy_damage = enemy.special_attack()
+                print(f"The {enemy.type} used a special attack!")
+            else:
+                enemy_damage = enemy.attack()
+            player.health -= enemy_damage
+            print(f"The {enemy.type} attacked you and dealt {enemy_damage} damage!")
+
+    if player.health > 0:
+        print(f"You defeated the {enemy.type}!")
+        reward_player(player, enemy.level)
+
+
